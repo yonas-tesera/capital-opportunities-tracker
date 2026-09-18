@@ -1,6 +1,9 @@
 import { ZodError } from "zod";
 import { ERRORS, fail, type ActionResult } from "./result";
 
+/** Thrown inside an action body to abort with a specific, user-facing failure message. */
+export class ActionFailure extends Error {}
+
 export function formatZodError(error: ZodError): string {
   const details = error.issues.map((issue) => {
     const field = issue.path.join(".");
@@ -17,6 +20,7 @@ export async function runAction<T>(body: () => Promise<ActionResult<T>>): Promis
   try {
     return await body();
   } catch (error) {
+    if (error instanceof ActionFailure) return fail(error.message);
     if (error instanceof ZodError) return fail(formatZodError(error));
     console.error("Unhandled server action error:", error);
     return fail(ERRORS.INTERNAL);

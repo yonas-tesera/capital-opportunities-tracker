@@ -14,13 +14,16 @@
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
+    "@tailwindcss/postcss": "^4.3.3",
     "bcryptjs": "^3.0.3",
     "next": "^16.3.5",
     "next-auth": "^4.24.15",
+    "postcss": "^8.5.28",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "server-only": "^0.0.1",
     "swr": "^2.5.1",
+    "tailwindcss": "^4.3.3",
     "zod": "^4.6.5"
   },
   "devDependencies": {

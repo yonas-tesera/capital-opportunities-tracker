@@ -13,6 +13,12 @@ export const ERRORS = {
   ARCHIVED: "Archived opportunities are read-only. Restore the opportunity first.",
   VALIDATION: "Validation failed.",
   INVALID_TRANSITION: "Invalid stage transition.",
+  CONFLICT: "The opportunity was changed by someone else. Refresh and try again.",
+  INVALID_REVIEWER: "The selected user does not exist or is not a reviewer.",
+  ALREADY_ASSIGNED: "That reviewer is already assigned to this opportunity.",
+  NO_REVIEWER_ASSIGNED: "This opportunity has no reviewer to unassign.",
+  ALREADY_ARCHIVED: "This opportunity is already archived.",
+  NOT_ARCHIVED: "This opportunity is not archived.",
   INTERNAL: "Something went wrong. Please try again.",
 } as const;
 

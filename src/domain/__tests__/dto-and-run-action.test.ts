@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { serializeActivity, serializeOpportunitySummary } from "../dto";
 import { addCommentSchema } from "../schemas";
 import { ERRORS, fail, isError, ok } from "../result";
-import { runAction } from "../run-action";
+import { ActionFailure, runAction } from "../run-action";
 
 const alice = { id: "u1", name: "Alice" };
 
@@ -46,7 +46,7 @@ describe("serializers", () => {
         { id: "a1", type: "STAGE_CHANGE", metadata: { previousStage: "X" }, createdAt: new Date(), actor: alice },
         new Map(),
       ),
-    ).toThrow();
+    ).toThrow("Malformed STAGE_CHANGE metadata");
   });
 });
 
@@ -60,6 +60,13 @@ describe("runAction", () => {
     const result = await runAction(async () => ok(addCommentSchema.parse({ opportunityId: "o1", content: "" })));
     expect(isError(result, "VALIDATION")).toBe(true);
     expect(result.error).toContain("content: Comment cannot be empty.");
+  });
+
+  it("turns an ActionFailure into its message", async () => {
+    const result = await runAction(async () => {
+      throw new ActionFailure(ERRORS.NOT_FOUND);
+    });
+    expect(result).toEqual({ success: false, error: ERRORS.NOT_FOUND });
   });
 
   it("hides unexpected error details", async () => {

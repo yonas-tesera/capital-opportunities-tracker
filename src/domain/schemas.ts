@@ -7,7 +7,7 @@ export const DEFAULT_PAGE_SIZE = 10;
 export const MAX_PAGE_SIZE = 50;
 const MAX_PAGE = 10_000;
 
-const idSchema = z
+export const opportunityIdSchema = z
   .string({ error: "Id is required." })
   .trim()
   .min(1, "Id is required.")
@@ -55,23 +55,23 @@ const opportunityFields = {
 export const createOpportunitySchema = z.object(opportunityFields);
 export type CreateOpportunityInput = z.infer<typeof createOpportunitySchema>;
 
-export const updateOpportunitySchema = z.object({ id: idSchema, ...opportunityFields });
+export const updateOpportunitySchema = z.object({ id: opportunityIdSchema, ...opportunityFields });
 export type UpdateOpportunityInput = z.infer<typeof updateOpportunitySchema>;
 
 export const assignReviewerSchema = z.object({
-  opportunityId: idSchema,
-  reviewerId: idSchema.nullable(),
+  opportunityId: opportunityIdSchema,
+  reviewerId: opportunityIdSchema.nullable(),
 });
 export type AssignReviewerInput = z.infer<typeof assignReviewerSchema>;
 
 export const changeStageSchema = z.object({
-  opportunityId: idSchema,
+  opportunityId: opportunityIdSchema,
   targetStage: z.enum(STAGES, { error: "Target stage must be a valid stage." }),
 });
 export type ChangeStageInput = z.infer<typeof changeStageSchema>;
 
 export const addCommentSchema = z.object({
-  opportunityId: idSchema,
+  opportunityId: opportunityIdSchema,
   content: z
     .string({ error: "Comment is required." })
     .trim()
@@ -80,10 +80,10 @@ export const addCommentSchema = z.object({
 });
 export type AddCommentInput = z.infer<typeof addCommentSchema>;
 
-export const archiveOpportunitySchema = z.object({ opportunityId: idSchema });
+export const archiveOpportunitySchema = z.object({ opportunityId: opportunityIdSchema });
 export type ArchiveOpportunityInput = z.infer<typeof archiveOpportunitySchema>;
 
-export const restoreOpportunitySchema = z.object({ opportunityId: idSchema });
+export const restoreOpportunitySchema = z.object({ opportunityId: opportunityIdSchema });
 export type RestoreOpportunityInput = z.infer<typeof restoreOpportunitySchema>;
 
 // Every field falls back to its default on invalid input so a hand-edited URL never crashes a page.
@@ -124,3 +124,8 @@ export function parseListOpportunitiesQuery(
   }
   return listOpportunitiesQuerySchema.parse(raw);
 }
+
+export const signInSchema = z.object({
+  email: z.string().trim().toLowerCase().min(1).max(254),
+  password: z.string().min(1).max(200),
+});
