@@ -1,0 +1,137 @@
+// =============================================================================
+// Capital Opportunities Tracker — data model
+//
+// Invariants Prisma cannot express, and where each is enforced:
+//
+//  1. Assigned reviewer must have role REVIEWER
+//     -> Server Action `assignReviewer` (looks up the target user's role in the
+//        DB before writing `assignedReviewerId`).
+//  2. Stage state machine: DRAFT -> UNDER_REVIEW -> APPROVED | REJECTED only
+//     -> Server Action `changeStage` via a single transition table; the stage
+//        update and its ActivityLog row are written in one prisma.$transaction.
+//  3. Archived opportunities are read-only (no edit, no stage change)
+//     -> Server Actions `updateOpportunity` / `changeStage` reject when
+//        `isArchived` is true; only `archive` / `restore` may touch the flag.
+//  4. Role-based access (ADMIN / REVIEWER / VIEWER)
+//     -> every Server Action, using the verified NextAuth session.
+//  5. ActivityLog is append-only
+//     -> DB trigger in the initial migration rejects UPDATE and DELETE; the
+//        application only ever calls `activityLog.create`. All relations use
+//        onDelete: Restrict, so nothing cascades into it either.
+//  6. Text length / range limits (description <= 500, comment 1..1000,
+//     amount > 0) -> VarChar limits plus CHECK constraints in the initial
+//        migration, and Zod validation in Server Actions before any query.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  REVIEWER
+  VIEWER
+}
+
+enum Stage {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum Currency {
+  USD
+  EUR
+  GBP
+}
+
+enum ActivityType {
+  CREATION
+  STAGE_CHANGE
+  REVIEWER_ASSIGNMENT
+  COMMENT_ADDED
+  ARCHIVED
+  RESTORED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+
+  assignedOpportunities Opportunity[] @relation("AssignedReviewer")
+  createdOpportunities  Opportunity[] @relation("Creator")
+  comments              Comment[]
+  activities            ActivityLog[]
+
+  @@index([role])
+}
+
+model Opportunity {
+  id                 String   @id @default(cuid())
+  companyName        String
+  requestedAmount    Decimal  @db.Decimal(18, 2)
+  currency           Currency
+  stage              Stage    @default(DRAFT)
+  submissionDate     DateTime
+  description        String   @db.VarChar(500)
+  isArchived         Boolean  @default(false)
+  createdById        String
+  assignedReviewerId String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  createdBy        User          @relation("Creator", fields: [createdById], references: [id], onDelete: Restrict)
+  assignedReviewer User?         @relation("AssignedReviewer", fields: [assignedReviewerId], references: [id], onDelete: Restrict)
+  comments         Comment[]
+  activities       ActivityLog[]
+
+  // List filtering by archive flag + stage, sorted by submission date
+  @@index([isArchived, stage, submissionDate(sort: Desc)])
+  // List filtering by archive flag, sorted by amount
+  @@index([isArchived, requestedAmount])
+  // List sorted by submission date across all stages
+  @@index([submissionDate(sort: Desc)])
+  // Reviewer workload: open items per reviewer
+  @@index([assignedReviewerId, isArchived, stage])
+  @@index([createdById])
+}
+
+model Comment {
+  id            String   @id @default(cuid())
+  opportunityId String
+  authorId      String
+  content       String   @db.VarChar(1000)
+  createdAt     DateTime @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Restrict)
+  author      User        @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([opportunityId, createdAt])
+  @@index([authorId])
+}
+
+model ActivityLog {
+  id            String       @id @default(cuid())
+  opportunityId String
+  actorId       String
+  type          ActivityType
+  metadata      Json         @default("{}")
+  createdAt     DateTime     @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Restrict)
+  actor       User        @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  // Timeline reads
+  @@index([opportunityId, createdAt])
+  @@index([actorId])
+}
