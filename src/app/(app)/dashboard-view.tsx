@@ -5,10 +5,11 @@ import useSWR from "swr";
 import type { DashboardStatsDTO } from "@/domain/dto";
 import { CURRENCIES, STAGES } from "@/domain/enums";
 import { CurrencyAmount } from "@/components/ui/currency-amount";
+import { LineChart } from "@/components/ui/line-chart";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StageBadge } from "@/components/ui/stage-badge";
+import { STAGE_LABELS, StageBadge } from "@/components/ui/stage-badge";
 import { fetchDashboard, keys } from "@/lib/fetchers";
 import { formatDate } from "@/lib/format";
 
@@ -83,6 +84,19 @@ function DashboardContent({ stats }: { stats: DashboardStatsDTO }) {
               />
             </Card>
           ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="trend-heading" className="space-y-3">
+        <h2 id="trend-heading" className="text-lg font-semibold text-slate-900">
+          Opportunities by stage
+        </h2>
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <LineChart
+            description="Number of active opportunities in each stage"
+            color="#6366f1"
+            points={STAGES.map((stage, i) => ({ label: `${i + 1} (${STAGE_LABELS[stage]})`, value: stats.byStage[stage] }))}
+          />
         </div>
       </section>
 
@@ -163,6 +177,7 @@ function DashboardSkeleton() {
           <Skeleton key={i} className="h-20" />
         ))}
       </div>
+      <Skeleton className="h-64" />
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-2 lg:col-span-2">
           {Array.from({ length: 5 }, (_, i) => (
