@@ -1,4 +1,4 @@
-import { PrismaClient, type Role, type Stage } from "@prisma/client";
+import { PrismaClient, type Currency, type Role, type Stage } from "@prisma/client";
 import { vi } from "vitest";
 import { getServerSession } from "next-auth";
 import { databaseName } from "./test-db.mjs";
@@ -38,7 +38,15 @@ export function signInAs(user: UserKey | null | { id: string }): void {
 let counter = 0;
 
 export async function makeOpportunity(
-  overrides: { stage?: Stage; isArchived?: boolean; assignedReviewerId?: string | null } = {},
+  overrides: {
+    companyName?: string;
+    requestedAmount?: string;
+    currency?: Currency;
+    submissionDate?: Date;
+    stage?: Stage;
+    isArchived?: boolean;
+    assignedReviewerId?: string | null;
+  } = {},
 ): Promise<string> {
   counter += 1;
   const created = await db.opportunity.create({

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, parseListOpportunitiesQuery } from "../schemas";
+import { STAGES } from "../enums";
+import { DEFAULT_PAGE_SIZE, listQueryToSearchParams, MAX_PAGE_SIZE, parseListOpportunitiesQuery } from "../schemas";
 
 const DEFAULTS = {
   search: undefined,
@@ -57,5 +58,34 @@ describe("parseListOpportunitiesQuery", () => {
   it("uses the first value of repeated params", () => {
     expect(parseListOpportunitiesQuery({ stage: ["DRAFT", "APPROVED"] }).stage).toBe("DRAFT");
     expect(parseListOpportunitiesQuery(new URLSearchParams("stage=DRAFT&stage=APPROVED")).stage).toBe("DRAFT");
+  });
+});
+
+describe("listQueryToSearchParams", () => {
+  it("omits defaults", () => {
+    expect(listQueryToSearchParams(parseListOpportunitiesQuery({})).toString()).toBe("");
+  });
+
+  it("round-trips every filter, sort and page combination", () => {
+    for (const search of [undefined, "atlas", "a b&c=d"]) {
+      for (const stage of [undefined, ...STAGES]) {
+        for (const archived of [false, true]) {
+          for (const sortBy of ["submissionDate", "requestedAmount"] as const) {
+            for (const sortDir of ["asc", "desc"] as const) {
+              for (const page of [1, 4]) {
+                const query = { search, stage, archived, sortBy, sortDir, page, pageSize: 10 };
+                const url = listQueryToSearchParams(query);
+                expect(parseListOpportunitiesQuery(new URLSearchParams(url.toString()))).toEqual(query);
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it("keeps a non-default page size", () => {
+    const query = parseListOpportunitiesQuery({ pageSize: "25" });
+    expect(listQueryToSearchParams(query).get("pageSize")).toBe("25");
   });
 });

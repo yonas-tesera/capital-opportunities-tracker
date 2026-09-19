@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { LoadingButton } from "@/components/ui/loading-button";
 
 const INVALID_CREDENTIALS = "Invalid email or password";
 
@@ -41,7 +42,7 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-      <div role="alert" aria-live="assertive" className="min-h-6 text-sm text-red-700">
+      <div role="alert" aria-live="assertive" className="min-h-5 text-sm font-medium text-red-700">
         {error}
       </div>
       <div className="space-y-1">
@@ -56,7 +57,7 @@ export function LoginForm() {
           required
           disabled={submitting}
           aria-invalid={error !== null}
-          className="w-full rounded border border-slate-300 bg-white px-3 py-2 disabled:opacity-60"
+          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 disabled:opacity-60 aria-[invalid=true]:border-red-600"
         />
       </div>
       <div className="space-y-1">
@@ -71,16 +72,12 @@ export function LoginForm() {
           required
           disabled={submitting}
           aria-invalid={error !== null}
-          className="w-full rounded border border-slate-300 bg-white px-3 py-2 disabled:opacity-60"
+          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 disabled:opacity-60 aria-[invalid=true]:border-red-600"
         />
       </div>
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-full rounded bg-slate-900 px-3 py-2 font-medium text-white disabled:opacity-60"
-      >
-        {submitting ? "Signing in…" : "Sign in"}
-      </button>
+      <LoadingButton type="submit" loading={submitting} loadingText="Signing in…" className="w-full">
+        Sign in
+      </LoadingButton>
     </form>
   );
 }

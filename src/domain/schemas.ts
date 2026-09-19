@@ -106,6 +106,21 @@ export const listOpportunitiesQuerySchema = z.object({
 });
 export type ListOpportunitiesQuery = z.infer<typeof listOpportunitiesQuerySchema>;
 
+const LIST_DEFAULTS = listOpportunitiesQuerySchema.parse({});
+
+/** Inverse of `parseListOpportunitiesQuery`: omits defaults so shared URLs stay short. */
+export function listQueryToSearchParams(query: ListOpportunitiesQuery): URLSearchParams {
+  const params = new URLSearchParams();
+  if (query.search) params.set("search", query.search);
+  if (query.stage) params.set("stage", query.stage);
+  if (query.archived) params.set("archived", "true");
+  if (query.sortBy !== LIST_DEFAULTS.sortBy) params.set("sortBy", query.sortBy);
+  if (query.sortDir !== LIST_DEFAULTS.sortDir) params.set("sortDir", query.sortDir);
+  if (query.page !== LIST_DEFAULTS.page) params.set("page", String(query.page));
+  if (query.pageSize !== LIST_DEFAULTS.pageSize) params.set("pageSize", String(query.pageSize));
+  return params;
+}
+
 type SearchParamsRecord = Record<string, string | string[] | undefined>;
 
 const LIST_QUERY_KEYS = Object.keys(listOpportunitiesQuerySchema.shape);

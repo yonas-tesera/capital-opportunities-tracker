@@ -2,6 +2,7 @@
 
 import { signOut } from "next-auth/react";
 import { useState } from "react";
+import { LoadingButton } from "@/components/ui/loading-button";
 
 export function SignOutButton() {
   const [pending, setPending] = useState(false);
@@ -13,13 +14,8 @@ export function SignOutButton() {
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={pending}
-      className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm disabled:opacity-60"
-    >
-      {pending ? "Signing out…" : "Sign out"}
-    </button>
+    <LoadingButton variant="secondary" className="py-1.5" loading={pending} loadingText="Signing out…" onClick={handleClick}>
+      Sign out
+    </LoadingButton>
   );
 }

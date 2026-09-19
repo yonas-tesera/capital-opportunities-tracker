@@ -7,7 +7,8 @@ import { ERRORS, type ActionResult } from "@/domain/result";
 // SWR fetchers: unwrap the ActionResult and throw on failure so SWR's `error` state is populated.
 // The Error message is the action's error string; compare it with `isError`-style prefixes.
 async function unwrap<T>(pending: Promise<ActionResult<T>>): Promise<T> {
-  const result = await pending;
+  // A rejected call means the request itself failed (network, server crash), not an ActionResult failure.
+  const result = await pending.catch(() => ({ success: false, error: ERRORS.INTERNAL }) satisfies ActionResult<T>);
   if (!result.success || result.data === undefined) throw new Error(result.error ?? ERRORS.INTERNAL);
   return result.data;
 }
